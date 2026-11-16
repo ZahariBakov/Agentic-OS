@@ -1,0 +1,34 @@
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Runtime data: jobs, logs (see PLAN.md)
+data/
+
+# Backups of data/ (agentic_os/backups.py)
+backups/
+
+# Personal files: your own rules and your memory notes (only the examples are in git)
+CLAUDE.local.md
+PLAN.md
+memory/identity/user.md
+memory/MEMORY.md
+memory/log.md
+memory/wiki/*
+!memory/wiki/.gitkeep
+memory/raw/*
+!memory/raw/.gitkeep
+!memory/raw/meetings/
+memory/raw/meetings/*
+!memory/raw/meetings/.gitkeep
+
+# Secrets (keys must never be in the repo)
+.env
+
+# Editor and system files
+.vscode/
+.idea/
+.DS_Store

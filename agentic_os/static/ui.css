@@ -1,0 +1,262 @@
+/* Agent Office - the shared styles for all pages. */
+
+/* Colors are variables, so a theme only changes the variables.
+   Dark is the theme of the project. The light colors stay below: to use them,
+   put data-theme="light" on <html>. */
+:root {
+  color-scheme: dark;  /* scrollbars, checkboxes and selects are dark too */
+  --bg: #14161b;
+  --panel: #1c1f26;
+  --text: #e6e8ec;
+  --muted: #9aa1ad;
+  --line: #2c313b;
+  --accent: #748ffc;
+  --accent-text: #10131a;
+  --done: #69db7c;
+  --running: #74c0fc;
+  --queued: #adb5bd;
+  --failed: #ff8787;
+  --stopped: #ffc078;
+  --interrupted: #da77f2;
+  --waiting: #66d9e8;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --text: #1d2330;
+  --muted: #667085;
+  --line: #e3e6eb;
+  --accent: #3b5bdb;
+  --accent-text: #ffffff;
+  --done: #2b8a3e;
+  --running: #1971c2;
+  --queued: #868e96;
+  --failed: #c92a2a;
+  --stopped: #e67700;
+  --interrupted: #9c36b5;
+  --waiting: #0c8599;
+}
+
+* { box-sizing: border-box; }
+/* `hidden` must win over a class with display (for example .form is a grid). */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* The bar at the top: the name and the links to the pages. */
+header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+header .name { font-weight: 700; }
+header nav { display: flex; gap: 16px; flex: 1; }
+header nav a { color: var(--muted); text-decoration: none; }
+header nav a.active { color: var(--text); font-weight: 600; }
+header .clock, header .weather, header .limits { color: var(--muted); font-size: 13px; }
+header .clock { font-variant-numeric: tabular-nums; }
+header .weather { cursor: help; }
+
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.panel h2 { margin: 0 0 12px; font-size: 16px; }
+.muted { color: var(--muted); }
+.error { color: var(--failed); }
+
+/* Forms */
+.form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.form .wide { grid-column: 1 / -1; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.form details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.form details textarea { width: 100%; margin-top: 4px; }
+.form label.inline { flex-direction: row; align-items: center; gap: 8px; }
+input, select, textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+textarea { min-height: 70px; resize: vertical; }
+/* An example in an empty field: light and italic, so it does not look like real text. */
+::placeholder { color: var(--muted); opacity: 0.6; font-style: italic; }
+.buttons { display: flex; gap: 8px; align-items: center; }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 14px;
+  background: var(--panel);
+  color: var(--text);
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+button:disabled { opacity: 0.5; cursor: default; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; color: var(--muted); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.click { cursor: pointer; }
+tr.click:hover, tr.selected { background: var(--bg); }
+.mono { font-family: var(--mono); font-size: 13px; }
+
+/* A status badge: a small colored label, for example "done". */
+.badge {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+.badge.done { color: var(--done); }
+.badge.running { color: var(--running); }
+.badge.queued { color: var(--queued); }
+.badge.failed { color: var(--failed); }
+.badge.stopped { color: var(--stopped); }
+.badge.interrupted { color: var(--interrupted); }
+.badge.waiting { color: var(--waiting); }
+
+/* Long text, for example an agent's answer. */
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 8px 0 0;
+  max-height: 480px;
+  overflow: auto;
+}
+
+/* Skills: one row per skill. */
+.skill { display: grid; grid-template-columns: 200px 1fr 110px 110px auto auto; gap: 8px; align-items: center;
+         padding: 8px 0; border-bottom: 1px solid var(--line); }
+.skill:last-child { border-bottom: none; }
+.skill .about { display: flex; flex-direction: column; }
+.skill .about small { color: var(--muted); }
+/* The conversation of a job: your messages have a line in the accent color. */
+.message { margin-top: 10px; font-size: 13px; }
+.message.user pre { border-left: 3px solid var(--accent); }
+/* The agent's open question: it needs you, so it stands out. */
+.question { margin-top: 16px; padding: 12px; border: 2px solid var(--waiting); border-radius: 8px; }
+.question h2 { margin: 0 0 4px; }
+.question .buttons { margin-top: 10px; flex-wrap: wrap; }
+/* Today: cards side by side on a wide screen, one under the other on a phone. */
+.today-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.today-card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.today-card h3 { margin: 0 0 8px; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+.today-item { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start;
+              padding: 6px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.today-item > div:first-child { flex: 1; min-width: 0; }
+.today-item.click { cursor: pointer; }
+.today-item.click:hover { background: var(--bg); }
+.today-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.tag.good { color: var(--done); border-color: var(--done); }
+.tag.bad { color: var(--failed); border-color: var(--failed); }
+.file-note { width: 100%; margin-top: 8px; min-height: 50px; }
+.tag.needs-you { color: var(--waiting); border-color: var(--waiting); }
+#compose { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.verdict { border-top: 1px solid var(--line); padding: 8px 0; }
+.verdict p { margin: 4px 0; }
+.verdict.in-cart { background: color-mix(in srgb, var(--accent, #4c8dff) 10%, transparent); }
+details summary { cursor: pointer; }
+.tag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-right: 6px;
+       display: inline-block; white-space: nowrap; }  /* a tag never breaks in two lines */
+
+/* A diff: added lines green, removed lines red. */
+.diff .add { color: var(--done); }
+.diff .del { color: var(--failed); }
+.diff .info { color: var(--muted); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.big { font-size: 28px; font-weight: 700; }
+
+/* The Jobs page: a sidebar with the views on the left, the view on the right (app/views.js). */
+.shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); align-items: start; }
+.shell main { max-width: none; margin: 0; padding: 20px; min-width: 0; }
+.shell .view { max-width: 1100px; }
+.shell .view.wide { max-width: none; }
+.sidebar {
+  position: sticky; top: 0; max-height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 2px; padding: 16px 10px;
+}
+.sidebar a {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none;
+}
+.sidebar a:hover { background: var(--panel); color: var(--text); }
+.sidebar a[aria-current="page"] { background: var(--panel); color: var(--text); font-weight: 600;
+                                  box-shadow: inset 3px 0 var(--accent); }
+.sidebar .group {
+  background: none; border: none; border-radius: 6px; text-align: left; margin-top: 12px; padding: 4px 10px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+}
+.sidebar .group::before { content: "\25BE  "; }
+.sidebar .group[aria-expanded="false"]::before { content: "\25B8  "; }
+.sidebar .more { display: flex; flex-direction: column; gap: 2px; }
+/* A number next to a link: things that wait for you. */
+.count { background: var(--waiting); color: var(--accent-text); border-radius: 10px; padding: 0 7px;
+         font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* A view whose panel has nothing (the panel is hidden) shows its note instead. */
+.empty-note { display: none; }
+.panel[hidden] + .empty-note { display: block; }
+
+/* Jobs: the list and the selected job side by side. The list stays in place while you scroll the job. */
+.jobs-split { display: grid; grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr); gap: 16px; align-items: start; }
+.jobs-split .panel { margin-bottom: 0; }
+.jobs-list { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+#detail:not([hidden]) + #detail-empty { display: none; }
+#run-message:empty { display: none; }
+.job-meta { font-size: 12px; color: var(--muted); }
+tr.selected td:first-child { box-shadow: inset 3px 0 var(--accent); }
+
+/* Settings: one setting per line. */
+.settings { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.settings label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* Small windows: the sidebar becomes a bar of links on top; Jobs shows the list OR the job. */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .shell main { padding: 12px; }
+  .sidebar { position: static; max-height: none; flex-direction: row; flex-wrap: wrap; align-items: center;
+             padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .sidebar .group { margin-top: 0; }
+  .sidebar .more { flex-direction: row; flex-wrap: wrap; }
+  .jobs-split { grid-template-columns: minmax(0, 1fr); }
+  .jobs-list { position: static; max-height: none; }
+  .jobs-split.has-job .jobs-list { display: none; }
+  .jobs-split:not(.has-job) .jobs-detail { display: none; }
+}
+
+/* Phones and small windows: one column. */
+@media (max-width: 700px) {
+  header { flex-wrap: wrap; gap: 8px 16px; padding: 12px 16px; }
+  .form, .grid2, .skill { grid-template-columns: 1fr; }
+}

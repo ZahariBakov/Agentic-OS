@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Office - Costs</title>
+  <link rel="stylesheet" href="/static/ui.css">
+  <script src="/static/ui.js"></script>
+</head>
+<body>
+<main id="page"><p class="muted">Loading...</p></main>
+
+<script>
+ui.header("Costs");
+
+const totals = [
+  { title: "Name", value: row => row.name },
+  { title: "Jobs", value: row => row.jobs, num: true },
+  { title: "Cost", value: row => ui.money(row.cost), num: true },
+];
+
+function panel(title, ...children) {
+  return ui.el("section", { className: "panel" }, ui.el("h2", {}, title), children);
+}
+
+// Cost per successful job: a success ended done and was not rejected, reworked or undone.
+const outcomeColumns = [
+  { title: "Name", value: row => row.name },
+  { title: "Jobs", value: row => row.jobs, num: true },
+  { title: "Succeeded", value: row => `${row.succeeded} (${Math.round(row.success_rate * 100)}%)`, num: true },
+  { title: "Cost", value: row => ui.money(row.cost), num: true },
+  { title: "Per success", value: row => row.cost_per_success === null ? "-" : ui.money(row.cost_per_success), num: true },
+];
+
+function outcomesPanel(result) {
+  const all = result.overall;
+  if (!all.jobs) return panel("Cost per successful job", ui.el("p", { className: "muted" }, `No jobs ended in the last ${result.days} days.`));
+  return panel(`Cost per successful job (last ${result.days} days)`,
+    ui.el("div", { className: "big" }, all.cost_per_success === null ? "-" : ui.money(all.cost_per_success)),
+    ui.el("div", { className: "muted" },
+      `${all.succeeded} of ${all.jobs} jobs succeeded (${Math.round(all.success_rate * 100)}%); `
+      + `${ui.money(all.cost_per_job)} per job. A success: done, and not rejected, reworked or undone.`),
+    ui.el("div", { className: "grid2" },
+      ui.el("div", {}, ui.el("h3", {}, "By lead"), ui.table(outcomeColumns, result.by_lead)),
+      ui.el("div", {}, ui.el("h3", {}, "By model"), ui.table(outcomeColumns, result.by_model))),
+    result.went_wrong.length ? [ui.el("h3", {}, "Went wrong lately"), ui.table([
+      { title: "Job", value: job => job.id },
+      { title: "Why", value: job => job.why },
+      { title: "Cost", value: job => ui.money(job.cost), num: true },
+      { title: "Task", value: job => job.task },
+    ], result.went_wrong)] : null);
+}
+
+ui.api("/api/costs").then(data => {
+  ui.show(document.getElementById("page"),
+    outcomesPanel(data.outcomes),
+    panel("Total",
+      ui.el("div", { className: "big" }, ui.money(data.total)),
+      ui.el("div", { className: "muted" }, `${data.jobs} ${data.jobs === 1 ? "job" : "jobs"}, plus the router calls`)),
+    ui.el("div", { className: "grid2" },
+      panel("By model", ui.table(totals, data.by_model)),
+      panel("By lead", ui.table(totals, data.by_lead))),
+    ui.el("div", { className: "grid2" },
+      panel("By skill", ui.table(totals, data.by_skill)),
+      panel("By routine", ui.table(totals, data.by_routine))),
+    panel("By router (choosing the model)", ui.table(totals, data.by_router)),
+    panel("Unused",
+      ui.el("p", {}, ui.el("strong", {}, "Leads: "),
+        data.unused_leads.length ? data.unused_leads.join(", ") : "every lead has worked at least once."),
+      ui.el("p", {}, ui.el("strong", {}, "Skills: "),
+        data.unused_skills.length ? data.unused_skills.join(", ") : "every skill has run at least once."),
+      ui.el("p", {}, ui.el("strong", {}, "Routines: "),
+        data.unused_routines.length ? data.unused_routines.join(", ") : "every routine has run at least once.")),
+    panel("Most expensive jobs", ui.table([
+      { title: "Cost", value: job => ui.money(job.cost), num: true },
+      { title: "Status", value: job => ui.badge(job.status) },
+      { title: "Model", value: job => job.model },
+      { title: "Lead", value: job => job.lead || "-" },
+      { title: "Task", value: job => job.task.length > 90 ? job.task.slice(0, 87) + "..." : job.task },
+    ], data.expensive)),
+  );
+}).catch(error => {
+  ui.show(document.getElementById("page"), ui.el("p", { className: "error" }, "Could not load the costs: " + error.message));
+});
+</script>
+</body>
+</html>

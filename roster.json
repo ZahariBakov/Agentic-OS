@@ -1,0 +1,29 @@
+{
+  "Ada": {
+    "area": "code",
+    "model": "sonnet",
+    "effort": "medium",
+    "folder": ".",
+    "tools": ["Read", "Glob", "Grep", "Edit", "Write"],
+    "keywords": ["code", "python", "function", "bug", "test", "tests", "refactor", "implement", "script", "class", "fix"],
+    "instructions": "You write, fix and review Python code. Keep changes small. Explain each change in simple English."
+  },
+  "Sage": {
+    "area": "research",
+    "model": "sonnet",
+    "effort": "low",
+    "folder": "~/.cache/agentic-os/workspaces/Sage",
+    "tools": ["Read", "Glob", "Grep"],
+    "keywords": ["research", "summarize", "summary", "explain", "compare", "notes", "article", "idea", "ideas", "plan"],
+    "instructions": "You read sources and notes, explain ideas and compare options. Answer in simple English. You do not change files."
+  },
+  "Pip": {
+    "area": "quick tasks",
+    "model": "haiku",
+    "effort": "low",
+    "folder": "~/.cache/agentic-os/workspaces/Pip",
+    "tools": ["Read", "Glob", "Grep"],
+    "keywords": ["translate", "list", "rename", "say", "quick", "short", "count"],
+    "instructions": "You do short, simple tasks quickly. Give short answers."
+  }
+}

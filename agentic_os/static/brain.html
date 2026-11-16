@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Office - Brain</title>
+  <link rel="stylesheet" href="/static/ui.css">
+  <script src="/static/ui.js"></script>
+  <style>
+    #map { width: 100%; height: auto; display: block; background: var(--bg); border-radius: 8px; touch-action: none; }
+    #map .edge { stroke: var(--line); stroke-width: 1; }
+    #map .edge.link { stroke: var(--accent); stroke-width: 1.5; }
+    #map .edge.similar { stroke-dasharray: 4 4; }
+    #map .edge.wrote { stroke: var(--done); opacity: .5; }
+    #map .edge.worked { stroke: var(--stopped); opacity: .7; }
+    #map .node { cursor: pointer; stroke: var(--bg); stroke-width: 2; }
+    #map .node.area { fill: var(--accent); }
+    #map .node.note { fill: var(--running); }
+    #map .node.lead { fill: var(--done); }
+    #map .node.project { fill: var(--stopped); }
+    #map .label { fill: var(--text); font-size: 11px; pointer-events: none; }
+    #map .label.note { fill: var(--muted); }
+    #map.focus .edge, #map.focus .node, #map.focus .label { opacity: .15; }
+    #map.focus .near { opacity: 1 !important; }
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 8px; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+  </style>
+</head>
+<body>
+<main id="page"><p class="muted">Loading...</p></main>
+
+<script>
+// The brain: notes, areas, leads and projects as a graph (brain.py builds it; Python, free).
+// The layout is a small force simulation in plain JS: nodes push each other away, edges pull.
+ui.header("Brain");
+
+const KINDS = { area: "area (a wiki folder)", note: "note", lead: "lead", project: "project" };
+const EDGES = { in: "in the area", link: "a link in the note", similar: "similar words",
+                wrote: "the lead saved it", worked: "jobs on the project" };
+const RADIUS = { area: 12, note: 7, lead: 11, project: 11 };
+const WIDTH = 1000, HEIGHT = 700;
+let selectedNode = null;
+
+function svg(tag, attrs = {}, ...children) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [name, value] of Object.entries(attrs)) element.setAttribute(name, value);
+  for (const child of children) if (child) element.append(child);
+  return element;
+}
+
+// Start on a circle (the same every time, so the map does not jump between visits), then
+// move each node by the forces for a fixed number of steps.
+function layout(nodes, edges) {
+  nodes.forEach((node, index) => {
+    const angle = 2 * Math.PI * index / nodes.length;
+    node.x = WIDTH / 2 + 250 * Math.cos(angle);
+    node.y = HEIGHT / 2 + 250 * Math.sin(angle);
+  });
+  const byId = Object.fromEntries(nodes.map(node => [node.id, node]));
+  const links = edges.map(edge => [byId[edge.source], byId[edge.target], edge.kind === "in" ? 90 : 170])
+    .filter(([a, b]) => a && b);
+  for (let step = 0; step < 300; step++) {
+    const cool = 1 - step / 300;
+    for (const node of nodes) { node.dx = (WIDTH / 2 - node.x) * 0.004; node.dy = (HEIGHT / 2 - node.y) * 0.004; }
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        const distance2 = Math.max(dx * dx + dy * dy, 25);
+        const push = 12000 / distance2;
+        const distance = Math.sqrt(distance2);
+        dx /= distance; dy /= distance;
+        a.dx += dx * push; a.dy += dy * push; b.dx -= dx * push; b.dy -= dy * push;
+      }
+    }
+    for (const [a, b, length] of links) {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const distance = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+      const pull = (distance - length) * 0.01;
+      a.dx += dx / distance * pull; a.dy += dy / distance * pull;
+      b.dx -= dx / distance * pull; b.dy -= dy / distance * pull;
+    }
+    for (const node of nodes) {
+      node.x = Math.min(WIDTH - 20, Math.max(20, node.x + Math.max(-10, Math.min(10, node.dx)) * cool * 3));
+      node.y = Math.min(HEIGHT - 20, Math.max(20, node.y + Math.max(-10, Math.min(10, node.dy)) * cool * 3));
+    }
+  }
+}
+
+function details(node, graph) {
+  const box = document.getElementById("details");
+  if (!node) {
+    ui.show(box, ui.el("p", { className: "muted" }, "Click a dot to see what it is and what it connects to."));
+    return;
+  }
+  const near = graph.edges.filter(edge => edge.source === node.id || edge.target === node.id);
+  const byId = Object.fromEntries(graph.nodes.map(item => [item.id, item]));
+  ui.show(box,
+    ui.el("h2", {}, node.label, " ", ui.el("span", { className: "tag" }, KINDS[node.kind])),
+    node.description ? ui.el("p", {}, node.description) : null,
+    node.path ? ui.el("p", { className: "muted" }, node.kind === "note" ? "memory/" + node.path : node.path) : null,
+    node.role ? ui.el("p", { className: "muted" }, node.role) : null,
+    ui.el("ul", {}, near.map(edge => {
+      const other = byId[edge.source === node.id ? edge.target : edge.source];
+      return ui.el("li", {}, other.label, " ",
+        ui.el("span", { className: "muted" }, EDGES[edge.kind] + (edge.weight && edge.kind !== "similar" ? ` (${edge.weight})` : "")));
+    })));
+}
+
+function draw(graph) {
+  const nodes = graph.nodes, edges = graph.edges;
+  layout(nodes, edges);
+  const byId = Object.fromEntries(nodes.map(node => [node.id, node]));
+  const map = svg("svg", { id: "map", viewBox: `0 0 ${WIDTH} ${HEIGHT}`, role: "img",
+                           "aria-label": "A map of the notes, areas, leads and projects" });
+  const edgeLines = edges.filter(edge => byId[edge.source] && byId[edge.target]).map(edge => {
+    const a = byId[edge.source], b = byId[edge.target];
+    const line = svg("line", { class: `edge ${edge.kind}`, x1: a.x, y1: a.y, x2: b.x, y2: b.y,
+                               "stroke-width": edge.kind === "worked" ? Math.min(1 + edge.weight / 2, 6) : "" });
+    line.dataset.ends = `${edge.source} ${edge.target}`;
+    map.append(line);
+    return line;
+  });
+  const parts = nodes.map(node => {
+    const circle = svg("circle", { class: `node ${node.kind}`, cx: node.x, cy: node.y, r: RADIUS[node.kind] },
+                       svg("title", {}, document.createTextNode(`${KINDS[node.kind]}: ${node.label}`)));
+    const label = svg("text", { class: `label ${node.kind}`, x: node.x + RADIUS[node.kind] + 3, y: node.y + 4 },
+                      document.createTextNode(node.label.length > 28 ? node.label.slice(0, 27) + "..." : node.label));
+    circle.addEventListener("click", event => { event.stopPropagation(); select(node); });
+    map.append(circle, label);
+    return { node, circle, label };
+  });
+  map.addEventListener("click", () => select(null));
+
+  function select(node) {
+    selectedNode = node;
+    map.classList.toggle("focus", !!node);
+    const near = new Set(node ? [node.id] : []);
+    edgeLines.forEach(line => {
+      const [a, b] = line.dataset.ends.split(" ");
+      const touches = node && (a === node.id || b === node.id);
+      line.classList.toggle("near", !!touches);
+      if (touches) { near.add(a); near.add(b); }
+    });
+    parts.forEach(part => {
+      part.circle.classList.toggle("near", near.has(part.node.id));
+      part.label.classList.toggle("near", near.has(part.node.id));
+    });
+    details(node, graph);
+  }
+
+  const counts = graph.counts;
+  ui.show(document.getElementById("page"),
+    ui.el("section", { className: "panel" },
+      ui.el("h2", {}, "Brain"),
+      ui.el("p", { className: "muted" },
+        `${counts.note || 0} notes in ${counts.area || 0} areas, ${counts.lead || 0} leads, ${counts.project || 0} projects. `
+        + "Dashed lines: notes that share rare words (Python finds them; no AI)."),
+      ui.el("div", { className: "legend" }, Object.entries(KINDS).map(([kind, text]) =>
+        ui.el("span", {}, ui.el("span", { className: "dot", style: `background: var(--${
+          { area: "accent", note: "running", lead: "done", project: "stopped" }[kind]})` }), text))),
+      map),
+    ui.el("section", { className: "panel", id: "details" }));
+  details(null, graph);
+}
+
+ui.api("/api/brain").then(draw).catch(error => {
+  ui.show(document.getElementById("page"), ui.el("p", { className: "error" }, "Could not load the brain: " + error.message));
+});
+</script>
+</body>
+</html>

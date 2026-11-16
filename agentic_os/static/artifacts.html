@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Office - Artifacts</title>
+  <link rel="stylesheet" href="/static/ui.css">
+  <script src="/static/ui.js"></script>
+</head>
+<body>
+<main>
+  <section class="panel">
+    <div class="buttons" style="justify-content: space-between">
+      <h2>Artifacts</h2>
+      <input id="search" placeholder="Search titles...">
+    </div>
+    <p class="muted">The results of finished jobs, newest first. Files: data/artifacts/</p>
+    <div id="list"></div>
+  </section>
+  <section class="panel" id="detail" hidden></section>
+</main>
+
+<script>
+ui.header("Artifacts");
+
+const list = document.getElementById("list");
+const detail = document.getElementById("detail");
+const search = document.getElementById("search");
+let all = [];
+
+const columns = [
+  { title: "Date", value: a => a.date },
+  { title: "Title", value: a => a.title },
+  { title: "Lead", value: a => a.lead },
+  { title: "Model", value: a => a.model },
+  { title: "Cost", value: a => "$" + a.cost, num: true },
+];
+
+function showList() {
+  // Searching is exact work, so the browser does it: no agent, no tokens.
+  const words = search.value.toLowerCase().split(/\s+/).filter(Boolean);
+  const found = all.filter(a => words.every(word => a.title.toLowerCase().includes(word)));
+  ui.show(list, ui.table(columns, found, a => showDetail(a.job)));
+}
+
+async function showDetail(id) {
+  const artifact = await ui.api(`/api/artifacts/${id}`);
+  ui.show(detail,
+    ui.el("div", { className: "buttons", style: "justify-content: space-between" },
+      ui.el("h2", {}, artifact.title),
+      ui.el("button", { onclick: () => { detail.hidden = true; } }, "Close")),
+    ui.el("div", { className: "muted" }, `job ${artifact.job} | ${artifact.date} | ${artifact.model} | $${artifact.cost}`),
+    ui.el("pre", {}, artifact.text),
+  );
+  detail.hidden = false;
+  detail.scrollIntoView({ behavior: "smooth" });
+}
+
+search.oninput = showList;
+ui.api("/api/artifacts").then(items => { all = items; showList(); })
+  .catch(error => ui.show(list, ui.el("p", { className: "error" }, "Could not load the artifacts: " + error.message)));
+</script>
+</body>
+</html>

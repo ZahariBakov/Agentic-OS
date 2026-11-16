@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Office - Jobs</title>
+  <link rel="stylesheet" href="/static/ui.css">
+  <script src="/static/ui.js"></script>
+</head>
+<body>
+<div class="shell">
+<!-- The sidebar: one link per view. A view is a part of the page; the address (#jobs, #today...)
+     says which one shows (app/views.js). -->
+<nav class="sidebar" aria-label="Views">
+  <a href="#today" data-nav="today">Today</a>
+  <a href="#jobs" data-nav="jobs">Jobs <span class="count" id="count-jobs" title="Things that wait for you" hidden></span></a>
+  <a href="#new" data-nav="new">New job</a>
+  <button type="button" class="group" id="more-toggle" aria-expanded="true" aria-controls="more">More</button>
+  <div class="more" id="more">
+    <a href="#projects" data-nav="projects">Projects</a>
+    <a href="#skills" data-nav="skills">Skills</a>
+    <a href="#routines" data-nav="routines">Routines</a>
+    <a href="#recos" data-nav="recos">Recos <span class="count" id="count-recos" hidden></span></a>
+    <a href="#lessons" data-nav="lessons">Lessons <span class="count" id="count-lessons" hidden></span></a>
+    <a href="#proposals" data-nav="proposals">Proposals <span class="count" id="count-proposals" hidden></span></a>
+    <a href="#settings" data-nav="settings">Settings</a>
+  </div>
+</nav>
+
+<main>
+  <div class="view" data-view="today">
+  <section class="panel" id="today">
+    <div class="buttons" style="justify-content: space-between">
+      <h2>Today</h2>
+      <span class="muted" id="today-hint"></span>
+    </div>
+    <div class="today-cards" id="today-cards"></div>
+  </section>
+  </div>
+
+  <div class="view" data-view="new">
+  <section class="panel">
+    <h2>New job</h2>
+    <form id="new-job" class="form">
+      <label class="wide">Task
+        <textarea name="task" required placeholder="What should the agent do?"></textarea>
+      </label>
+      <label>Lead
+        <select name="lead" id="lead-select">
+          <option value="auto" selected>Auto (the dispatcher chooses)</option>
+          <option value="">No lead (one-time agent)</option>
+        </select>
+      </label>
+      <label>Model
+        <select name="model">
+          <option value="">Router chooses</option>
+          <option value="haiku">haiku</option>
+          <option value="sonnet">sonnet</option>
+          <option value="opus">opus</option>
+        </select>
+      </label>
+      <label>Folder (optional)
+        <input name="folder" placeholder="../myproj">
+      </label>
+      <label>Check (optional)
+        <input name="check" placeholder="python -m pytest -q">
+      </label>
+      <details class="wide" id="reference-box">
+        <summary>Reference (optional): a good example answer. A critic compares the result with it.</summary>
+        <textarea name="reference" placeholder="Paste a good answer to this task or a similar one."></textarea>
+      </details>
+      <div class="wide buttons">
+        <button type="submit" class="primary">Start job</button>
+        <label class="inline muted"><input type="checkbox" name="memory" checked> use memory</label>
+        <label class="inline muted" title="The agent first proposes steps and a cost, with read tools only. Opus jobs always do.">
+          <input type="checkbox" name="plan"> plan first</label>
+        <span id="form-message"></span>
+      </div>
+    </form>
+  </section>
+  </div>
+
+  <div class="view" data-view="settings">
+  <section class="panel">
+    <h2>Settings</h2>
+    <form id="plan-settings" class="settings">
+      <label>Plans with an estimate up to $
+        <input name="usd" type="number" min="0" step="0.05" style="width: 6em" aria-label="Auto-approve amount in US dollars">
+        <span class="muted">need no OK (0: every plan asks you).</span></label>
+      <label>Isolated workspace (git projects):
+        <select name="isolate" aria-label="When a job gets its own workspace">
+          <option value="always">always</option>
+          <option value="shared">only next to another job</option>
+          <option value="off">off (edit the project directly)</option>
+        </select></label>
+      <label>Twins per lead:
+        <select name="twins" aria-label="Second desks per lead when it is busy">
+          <option value="0">0 (jobs wait)</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+        </select></label>
+      <label>Shell commands:
+        <select name="commands" aria-label="May agents run shell commands">
+          <option value="ask">ask me each time</option>
+          <option value="off">off (agents cannot run them)</option>
+        </select></label>
+      <label>Always allowed (one per line):
+        <textarea name="allow" rows="2" style="width: 18em" placeholder="python -m pytest"
+                  aria-label="Commands that run without asking"></textarea></label>
+      <div class="buttons">
+        <button type="submit" class="primary">Save settings</button>
+        <span id="plan-settings-message"></span>
+      </div>
+    </form>
+  </section>
+  </div>
+
+  <!-- Lessons and proposals hide their panel when it has nothing: then the note under it shows. -->
+  <div class="view" data-view="proposals">
+  <section class="panel" id="proposals" hidden></section>
+  <p class="panel muted empty-note">No skill proposals now. A calibrate job makes them.</p>
+  </div>
+
+  <div class="view" data-view="lessons">
+  <section class="panel" id="lessons" hidden></section>
+  <p class="panel muted empty-note">No lessons yet. A lead writes a draft after a bad result.</p>
+  </div>
+
+  <div class="view" data-view="projects">
+  <section class="panel" id="projects">
+    <h2>Projects</h2>
+    <p class="muted">What agents get about a project (a job's folder, or its git repository): your
+      instructions always, the decisions, known failures and past jobs only when they fit the task.</p>
+    <form id="project-form" class="form">
+      <label>Project folder <input name="folder" list="project-folders" required placeholder="~/workspace/myproj"></label>
+      <datalist id="project-folders"></datalist>
+      <label>Kind <select name="kind">
+        <option value="instruction">instruction (always given)</option>
+        <option value="decision">decision</option>
+        <option value="failure">known failure</option>
+      </select></label>
+      <label style="grid-column: 1 / -1">Text <input name="text" required maxlength="600"
+        placeholder="Use pytest; never touch the legacy/ folder"></label>
+      <div class="buttons"><button type="submit" class="primary">Add</button><span id="project-message"></span></div>
+    </form>
+    <div id="project-list"></div>
+  </section>
+  </div>
+
+  <div class="view" data-view="skills">
+  <section class="panel">
+    <h2>Skills</h2>
+    <div id="skills"></div>
+    <p id="skill-message"></p>
+  </section>
+  </div>
+
+  <div class="view" data-view="routines">
+  <section class="panel">
+    <h2>Routines</h2>
+    <div id="routines"></div>
+    <p id="routine-message"></p>
+  </section>
+  </div>
+
+  <div class="view" data-view="recos">
+  <section class="panel" id="recos"></section>
+  </div>
+
+  <!-- Jobs: the list and the selected job side by side (on a phone: one of them). -->
+  <div class="view wide" data-view="jobs">
+  <div class="jobs-split" id="jobs-split">
+  <section class="panel jobs-list">
+    <div class="buttons" style="justify-content: space-between">
+      <h2>Jobs</h2>
+      <div class="buttons">
+        <span id="live" class="muted">connecting...</span>
+        <button id="run-queued">Run queued jobs</button>
+      </div>
+    </div>
+    <p id="run-message"></p>
+    <div id="jobs"></div>
+  </section>
+
+  <div class="jobs-detail">
+  <section class="panel" id="detail" hidden>
+    <div id="detail-body"></div>
+    <!-- Outside detail-body: the live updates redraw the body, never this form, so a draft is not lost. -->
+    <form id="compose" class="form">
+      <label class="wide"><span id="compose-label">Write to the agent (a follow-up: it goes to the same session)</span>
+        <textarea name="text" placeholder="For example: make it shorter, or also add a test."></textarea>
+      </label>
+      <p class="wide error" id="compose-warning" hidden></p>
+      <div class="wide buttons">
+        <button type="submit" class="primary">Send</button>
+        <button type="button" id="request-changes" title="Your text and the file comments go back as a review: the job runs again, and it counts as rework">Request changes</button>
+        <span class="muted">Ctrl+Enter sends</span>
+        <span id="compose-message"></span>
+      </div>
+    </form>
+  </section>
+  <p class="panel muted" id="detail-empty">Click a job in the list to see it here.</p>
+  </div>
+  </div>
+  </div>
+</main>
+</div>
+
+<!-- The page's code: one file per part, in this order (main.js starts the page). -->
+<script src="/static/app/common.js"></script>
+<script src="/static/app/views.js"></script>
+<script src="/static/app/today.js"></script>
+<script src="/static/app/new_job.js"></script>
+<script src="/static/app/job_list.js"></script>
+<script src="/static/app/job_view.js"></script>
+<script src="/static/app/job_talk.js"></script>
+<script src="/static/app/job_review.js"></script>
+<script src="/static/app/projects.js"></script>
+<script src="/static/app/skills.js"></script>
+<script src="/static/app/lessons.js"></script>
+<script src="/static/app/routines.js"></script>
+<script src="/static/app/recos.js"></script>
+<script src="/static/app/main.js"></script>
+</body>
+</html>

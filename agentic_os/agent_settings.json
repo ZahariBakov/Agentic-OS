@@ -1,0 +1,28 @@
+{
+  "autoMemoryEnabled": false,
+  "permissions": {
+    "deny": [
+      "Bash(rm *)",
+      "Bash(sudo *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git reset *)",
+      "Bash(git checkout *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "WebFetch",
+      "Read(~/.ssh/**)",
+      "Read(~/.config/agentic-os/**)",
+      "Read(**/.env)",
+      "Read(~/.git-credentials)",
+      "Read(~/.netrc)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.claude/.credentials.json)",
+      "Read(~/.aws/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.docker/config.json)"
+    ]
+  }
+}
