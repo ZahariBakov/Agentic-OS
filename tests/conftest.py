@@ -14,6 +14,9 @@ from agentic_os import feedback, job_store, jobs, limits, mail, memory, project_
 # Where the real personal data lives. No test may read or write there.
 REAL_DATA = job_store.DATA_DIR.resolve()
 REAL_CACHE = Path.home() / ".cache" / "agentic-os"
+# The project's own code and files. In a job's workspace the project itself is under
+# REAL_CACHE (~/.cache/agentic-os/worktrees/<job>), and its code must not move with the cache.
+PROJECT = Path(job_store.__file__).resolve().parent.parent
 
 
 @pytest.fixture(autouse=True)
@@ -34,6 +37,8 @@ def no_real_data(tmp_path, monkeypatch):
             if not isinstance(value, Path):
                 continue
             for real, fake in moves:
+                if real == REAL_CACHE and value.is_relative_to(PROJECT):
+                    continue  # the project's own files (static/, skills/ ...), not the cache
                 if value.is_relative_to(real):
                     monkeypatch.setattr(module, name, fake / value.relative_to(real))
                     break

@@ -8,6 +8,7 @@ The top part of the jobs code: it imports job_store, job_talk and job_review.
 """
 
 import os
+import re
 import signal
 import subprocess
 import threading
@@ -41,6 +42,23 @@ PROMPTS_DIR = job_store.DATA_DIR / "prompts"  # the memory prompt of each job
 # Claude Code reads CLAUDE.md in the work folder and in all its parent folders.
 DEFAULT_WORK_DIR = Path.home() / ".cache" / "agentic-os" / "workspaces" / "jobs"
 MAX_TRIES = 3  # agent calls per job when the check fails
+# Parts of a check's output that change on every run, even when nothing else changed:
+# times ("641 passed in 35.50s", "0.00 sec", 12:43:30), pytest's temporary folders
+# (pytest-11) and memory addresses. same_failure() leaves them out (job 87ed220a looped
+# 9 times on a broken check, because "in 35.50s" made each output "new").
+CHANGING_PARTS = [
+    (re.compile(r"\b\d{1,2}:\d{2}:\d{2}(?:\.\d+)?"), "<clock>"),
+    (re.compile(r"\b\d+(?:\.\d+)?\s?(?:s|sec|seconds|ms)\b"), "<time>"),
+    (re.compile(r"pytest-\d+"), "pytest-<n>"),
+    (re.compile(r"0x[0-9a-fA-F]+"), "0x<address>"),
+]
+
+
+def comparable(output):
+    """Return the check output without the parts that change on every run (CHANGING_PARTS)."""
+    for pattern, placeholder in CHANGING_PARTS:
+        output = pattern.sub(placeholder, output or "")
+    return output
 CHECK_TIMEOUT = 600  # seconds
 FIX_PROMPT = """The check `{check}` failed with exit code {code}. The end of its output:
 
@@ -393,7 +411,9 @@ def work(job, on_start):
         if messages:
             task += "\n\n" + job_talk.prompt_for(messages)
         reply = call_agent(job, task, session_id, extra_args, on_start, read_only=planning)
-    previous_output = None
+    # A follow-up starts from the last check output: when the agent changes nothing that
+    # helps, the first check of the new run already gives the same output and the run stops.
+    previous_output = comparable(job.check_output) if job.check_output else None
     while True:
         if planning:
             planning = False
@@ -416,9 +436,9 @@ def work(job, on_start):
                     return reply, f"the check failed {tries} times: {job.check}"
                 # The same output again means that the agent's changes did not help
                 # (for example, the check itself is broken). One more try only costs money.
-                if job.check_output == previous_output:
+                if comparable(job.check_output) == previous_output:
                     return reply, f"the check gave the same output twice: {job.check}"
-                previous_output = job.check_output
+                previous_output = comparable(job.check_output)
                 prompt = FIX_PROMPT.format(check=job.check, code=code, output=job.check_output)
         if prompt is None and job.wildcards:
             # Exact, like the check: the number of items and the WILDCARD marks.

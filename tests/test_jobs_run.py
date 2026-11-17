@@ -393,3 +393,36 @@ def test_a_queued_job_can_be_cancelled(fake_agent):
     saved = jobs.load(job.id)
     assert saved.status == "stopped" and saved.finished_at
     assert fake_agent == []  # no agent call
+
+
+# A check that always fails, but with a new time in its output each run (like pytest's "in 35.50s").
+CHANGING_FAILURE = "python3 -c \"import random; print(f'1 failed in {random.random():.3f}s'); raise SystemExit(1)\""
+
+
+def test_comparable_leaves_out_what_changes_on_every_run():
+    first = "116 failed, 525 passed in 35.50s at 12:43:30 /tmp/pytest-of-u/pytest-11/x 0x7f3a2b"
+    second = "116 failed, 525 passed in 2.1s at 13:50:29 /tmp/pytest-of-u/pytest-12/x 0x7f99cc"
+    assert job_run.comparable(first) == job_run.comparable(second)
+    assert job_run.comparable("116 failed") != job_run.comparable("100 failed")
+
+
+def test_a_check_that_fails_the_same_way_stops_after_two_calls(fake_agent, tmp_path):
+    """Job 87ed220a: only the time in the output changed, and the job looped 9 times."""
+    job = jobs.add("x", model="haiku", use_memory=False, folder=tmp_path, check=CHANGING_FAILURE)
+
+    jobs.run_job(job)
+
+    assert len(fake_agent) == 2  # the work, and one fix that changed nothing
+    assert "the same output twice" in jobs.load(job.id).error
+
+
+def test_a_follow_up_stops_when_the_check_still_fails_the_same_way(fake_agent, tmp_path):
+    job = jobs.add("x", model="haiku", use_memory=False, folder=tmp_path, check=CHANGING_FAILURE)
+    jobs.run_job(job)
+
+    queued, start, _ = jobs.follow_up(job.id, "Do not fix the other tests. Finish.")
+    assert start
+    jobs.run_job(queued)
+
+    assert len(fake_agent) == 3  # one more call for the follow-up, and no fix calls after it
+    assert "the same output twice" in jobs.load(job.id).error
