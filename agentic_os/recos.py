@@ -4,7 +4,7 @@ A routine that suggests routines. It is exact work, so it is
 Python only, no AI, and it costs nothing:
 
 1. Collect your requests of the last days: the prompts you typed in Claude
-   Code (~/.claude/history.jsonl) and the jobs of Agent Office. Jobs from
+   Code (~/.claude/history.jsonl) and the jobs of Agentic OS. Jobs from
    routines, skills and ingest are skipped: they are already automatic.
 2. Turn each request into a set of words (without small words like "the").
 3. Put similar requests into groups. Two requests are similar when they share
@@ -72,7 +72,7 @@ PASSIVE = re.compile(r"\b(check|watch|monitor|scan|look for|alert|any new|status
 class Request:
     text: str
     at: datetime
-    source: str  # "Claude Code" or "Agent Office"
+    source: str  # "Claude Code" or "Agentic OS"
     words: frozenset
 
 
@@ -125,7 +125,7 @@ def from_jobs(since):
         if job.routine or job.skill or job.source or job.lesson_for or job.parent or not job.created_at:
             continue
         at = datetime.fromisoformat(job.created_at)
-        if at >= since and (item := request(job.task, at, "Agent Office")):
+        if at >= since and (item := request(job.task, at, "Agentic OS")):
             found.append(item)
     return found
 

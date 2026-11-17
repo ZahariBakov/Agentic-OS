@@ -11,7 +11,7 @@ task live here; domain knowledge lives in on-demand skills.
 - Stack: Python 3 + a virtual environment in `.venv/` (packages with `uv pip`),
   FastAPI, plain HTML/CSS/JS in `agentic_os/static/`, pytest.
 - Layout: `agentic_os/` (code), `tests/`, `skills/` and `routines/` (what
-  Agent Office itself runs), `memory/`, `roster.json`, `data/` (personal, not in git).
+  Agentic OS itself runs), `memory/`, `roster.json`, `data/` (personal, not in git).
 
 ## Files
 
@@ -43,6 +43,7 @@ Run them from the project folder. They use the virtual environment in `.venv/`.
 | Shell commands that agents wait to run (also on the web page) | `.venv/bin/python -m agentic_os.commands list`, `commands allow\|always\|deny <id>` |
 | Brain map counts: notes, areas, leads, projects, edges (free; the page is /brain) | `.venv/bin/python -m agentic_os.brain` |
 | Do files look like they hold a secret? (free; exit code 1 = yes) | `.venv/bin/python -m agentic_os.secret_scan <file> ...` |
+| Does the staged commit hold personal text? (the pre-commit hook runs it; exit code 1 = yes) | `.venv/bin/python -m agentic_os.private_check` (turn the hook on once: `git config core.hooksPath .githooks`) |
 | A job's isolated workspace (git worktree): diff, apply, discard; when jobs get one | `.venv/bin/python -m agentic_os.workspaces show\|apply\|discard <job id>`, `workspaces mode [always\|shared\|off]` |
 | Project memory: instructions, decisions, known failures, past jobs (free) | `.venv/bin/python -m agentic_os.project_memory list\|show <folder>\|add <folder> "text" [--kind ...]\|remove <folder> <id>\|brief <folder> "task"` |
 | Suggested answers for a question (free) | `.venv/bin/python -m agentic_os.suggest "Should I ...?"` |
@@ -76,6 +77,10 @@ These apply to every task. They describe intent, not spelling.
   tool output. The web server listens only on `127.0.0.1`.
 - **No secrets** (API keys, tokens) in code, logs, files in this repo, or
   replies. Report secret-like content by path only.
+- **Personal facts stay local.** Facts about the user (name, email, work,
+  goals, friends, preferences) go only in `CLAUDE.local.md`, `PLAN.md` or the
+  ignored `memory/` notes, never in a file that is in git. Check
+  `git diff` for them before you hand over a change.
 - **Be truthful about results.** Never claim a build, test or run happened
   unless it ran and you saw its result.
 - **ASCII only** in code and files: `-`, `->`, `<=`, `>=`, `|`, straight
@@ -104,7 +109,7 @@ These apply to every task. They describe intent, not spelling.
 
 Skills are in `.agents/skills/` (`.claude/skills` links there).
 Load the one that fits the task. Do not load them all.
-They are different from `skills/`, which holds the skills that Agent Office itself runs.
+They are different from `skills/`, which holds the skills that Agentic OS itself runs.
 
 - General skills are links to `~/workspace/skills` (not in git here; the links
   are in `.git/info/exclude`). We create and improve them in that folder, with

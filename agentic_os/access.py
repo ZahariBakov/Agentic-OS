@@ -32,9 +32,9 @@ TOKEN_FILE = DATA_DIR / "app-token"
 LOGIN_PATH = "/__app"
 HEADER = "x-agentic-os-token"
 COOKIE_DAYS = 365  # the token file lives in data/ anyway; no need to log in every day
-NO_TOKEN = ("Agent Office needs its token. Open the link that the server printed at start, "
+NO_TOKEN = ("Agentic OS needs its token. Open the link that the server printed at start, "
             "or run: python -m agentic_os.access link")
-UNREADABLE = "Agent Office cannot read its token file data/app-token. Check that the file can be read."
+UNREADABLE = "Agentic OS cannot read its token file data/app-token. Check that the file can be read."
 TOKEN_LOCK = threading.Lock()  # the web server's threads make the token one at a time
 
 

@@ -93,4 +93,4 @@ def test_jobs_count_but_not_automatic_ones(tmp_path, temp_jobs):
     write_history(missing, [(task, datetime.now())])
     found = recos.suggest(now=datetime.now(), history=missing)[0]
     assert found["count"] == 3
-    assert "Agent Office" in found["what"] and "Claude Code" in found["what"]
+    assert "Agentic OS" in found["what"] and "Claude Code" in found["what"]

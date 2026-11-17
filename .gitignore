@@ -13,6 +13,7 @@ backups/
 
 # Personal files: your own rules and your memory notes (only the examples are in git)
 CLAUDE.local.md
+.private-words
 PLAN.md
 memory/identity/user.md
 memory/MEMORY.md

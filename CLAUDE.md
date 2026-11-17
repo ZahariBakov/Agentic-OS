@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Claude Code in Agent Office
+# Claude Code in Agentic OS
 
 `AGENTS.md` (imported above) has the project, the commands, the restrictions
 and the skills.

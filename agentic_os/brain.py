@@ -1,4 +1,4 @@
-"""Brain view: a map of what Agent Office knows - notes, areas, leads and projects - as a graph.
+"""Brain view: a map of what Agentic OS knows - notes, areas, leads and projects - as a graph.
 
 It is built from what the office already records. Python only, no AI, nothing new is saved: the web page /brain draws it.
 

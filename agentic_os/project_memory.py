@@ -1,4 +1,4 @@
-"""Project memory: what Agent Office knows about each project, kept per project and given per job.
+"""Project memory: what Agentic OS knows about each project, kept per project and given per job.
 
 memory/ is
 about the user and the world; a lead's lessons are about the lead. This is
@@ -255,7 +255,7 @@ def brief(folder, task):
     instructions, related = relevant(project, task)
     text = ""
     if instructions or related:
-        text = f"\n\nWhat Agent Office remembers about the project {project.name}:\n"
+        text = f"\n\nWhat Agentic OS remembers about the project {project.name}:\n"
         text += "\n".join(line_of(entry) for entry in instructions + related)
         if len(text) > BRIEF_CHARS:
             text = text[:BRIEF_CHARS] + " ..."
@@ -390,7 +390,7 @@ def by_file(name):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="What Agent Office remembers about each project.")
+    parser = argparse.ArgumentParser(description="What Agentic OS remembers about each project.")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("list", help="the projects")
     commands.add_parser("show", help="the entries, newest first").add_argument("folder")

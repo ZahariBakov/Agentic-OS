@@ -63,7 +63,7 @@ TWIN_MARK = "~"  # "Pip~2": the second desk of Pip
 TWIN_IDLE = 1200  # seconds; a twin idle longer starts a fresh session
 
 LEAD_PROMPT = """# Your role
-You are {name}, the {area} lead in Agent Office. {instructions}
+You are {name}, the {area} lead in Agentic OS. {instructions}
 
 # Handoff from your last session
 {handoff}

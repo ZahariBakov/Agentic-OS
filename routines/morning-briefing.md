@@ -8,7 +8,7 @@ memory: false
 max_week_usd: 0.10
 ---
 
-Write the morning briefing for the user of Agent Office.
+Write the morning briefing for the user of Agentic OS.
 
 Python collected these facts just before this job. They are complete and
 up to date. Do not run any command and do not read files: use only these facts.

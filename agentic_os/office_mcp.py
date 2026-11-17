@@ -1,14 +1,14 @@
-"""Office tools: an MCP server that Agent Office gives to every agent with tools.
+"""Office tools: an MCP server that Agentic OS gives to every agent with tools.
 
 Claude Code starts it (stdio) for each agent call; `safety.mcp_args(job_id)` writes the
 config. It speaks MCP's JSON-RPC by hand (one JSON object per line):
 no new package.
 
-The tools read what Agent Office knows; they never call a model and never write memory
+The tools read what Agentic OS knows; they never call a model and never write memory
 (agents still save notes with tagged blocks, which Python checks):
 
     memory_search    the notes in memory/wiki that fit a query, best first
-    project_recall   what Agent Office remembers about the job's project
+    project_recall   what Agentic OS remembers about the job's project
     run_command      a shell command in the job's folder, after your OK (commands.py)
     delegate         sub-agents that read and report, in parallel (specialists.py)
 
@@ -157,7 +157,7 @@ TOOLS = {
         }, "required": ["query"]},
     }),
     "project_recall": (project_recall, {
-        "description": "What Agent Office remembers about this job's project (its folder or git repository): "
+        "description": "What Agentic OS remembers about this job's project (its folder or git repository): "
                        "the user's instructions (always), and the decisions, known failures and past jobs "
                        "that fit the query, best first. An error when the job has no project folder.",
         "inputSchema": {"type": "object", "properties": {

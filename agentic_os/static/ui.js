@@ -1,4 +1,4 @@
-// Agent Office - a small UI library, shared by all pages.
+// Agentic OS - a small UI library, shared by all pages.
 //
 // Rule: text goes into the page with textContent, never with innerHTML.
 // Agent answers are untrusted text. With innerHTML, an answer that contains
@@ -107,7 +107,7 @@ const ui = {
     const weather = ui.el("span", { className: "weather" });
     const limits = ui.el("span", { className: "limits" });
     const bar = ui.el("header", {},
-      ui.el("span", { className: "name" }, "Agent Office"),
+      ui.el("span", { className: "name" }, "Agentic OS"),
       ui.el("nav", {}, pages.map(([href, name]) =>
         ui.el("a", { href, className: name === active ? "active" : "" }, name))),
       clock,

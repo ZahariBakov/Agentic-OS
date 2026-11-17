@@ -1,0 +1,5 @@
+#!/bin/sh
+# Stop a commit that holds personal text (see agentic_os/private_check.py).
+# Turn it on once per clone: git config core.hooksPath .githooks
+if [ -x .venv/bin/python ]; then PY=.venv/bin/python; else PY=python3; fi
+exec "$PY" -m agentic_os.private_check

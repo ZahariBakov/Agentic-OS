@@ -1,4 +1,4 @@
-"""Web: a local web page for Agent Office (jobs, file changes, skills, routines, costs, artifacts).
+"""Web: a local web page for Agentic OS (jobs, file changes, skills, routines, costs, artifacts).
 
 The server listens only on 127.0.0.1, so other computers cannot connect.
 The pages are static files in agentic_os/static/. Their JavaScript gets
@@ -116,7 +116,7 @@ async def lifespan(app):
     stop_work()  # also when the server stops in another way
 
 
-app = FastAPI(title="Agent Office", lifespan=lifespan)
+app = FastAPI(title="Agentic OS", lifespan=lifespan)
 app.state.port = 8000
 app.state.routines = True
 

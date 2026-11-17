@@ -1,4 +1,4 @@
-# Agent Office
+# Agentic OS
 
 A small "operating system" for Claude Code agents, written in Python.
 
@@ -67,7 +67,7 @@ decisions.** Dates, file lists, schedules, checks and costs are plain Python fun
 | `agentic_os/` | the Python package (one module per area: `jobs.py` and its parts `job_*.py`, `router.py`, `leads.py`, `memory.py`, `web.py`, ...) |
 | `agentic_os/static/` | the web page (plain HTML, CSS and JavaScript) |
 | `memory/` | the notes: `MEMORY.md` (the map), `wiki/`, `raw/`, `identity/`, `log.md` (your notes are not in git) |
-| `skills/`, `routines/` | the skills and the scheduled jobs that Agent Office runs (Markdown) |
+| `skills/`, `routines/` | the skills and the scheduled jobs that Agentic OS runs (Markdown) |
 | `roster.json` | the leads |
 | `tests/` | pytest tests (no real agent runs in the tests) |
 | `data/` | your jobs, logs and results (personal, not in git) |
@@ -78,16 +78,17 @@ You need:
 
 - Linux (it is built and tested on Ubuntu). On Windows, use WSL2 (see below).
 - [Claude Code](https://claude.com/claude-code), logged in (`claude` on your `PATH`).
-  Agent Office uses your Claude Code plan; it needs no API key.
+  Agentic OS uses your Claude Code plan; it needs no API key.
 - Python 3.13 and [uv](https://docs.astral.sh/uv/)
 
 ```bash
-git clone https://github.com/ZahariBakov/agent-office.git
-cd agent-office
+git clone https://github.com/ZahariBakov/Agentic-OS.git agentic-os
+cd agentic-os
 uv venv --python 3.13
 uv pip install -r requirements.txt
 .venv/bin/pytest -q          # optional: all tests should pass
 cp memory/identity/user.example.md memory/identity/user.md   # then write about yourself
+git config core.hooksPath .githooks   # stop commits that hold personal text
 ```
 
 Your own notes stay on your computer: `memory/` notes, `memory/identity/user.md` and
@@ -95,7 +96,7 @@ Your own notes stay on your computer: `memory/` notes, `memory/identity/user.md`
 
 ### Windows (WSL2)
 
-Agent Office uses Linux features (file locks, process groups), so on Windows it runs inside
+Agentic OS uses Linux features (file locks, process groups), so on Windows it runs inside
 WSL2, a real Linux in Windows. The code needs no changes.
 
 1. Open PowerShell as administrator and run `wsl --install`. It installs Ubuntu.
@@ -115,7 +116,7 @@ WSL2, a real Linux in Windows. The code needs no changes.
 
 Tips:
 
-- Keep the project in your Linux home (`~/workspace/agent-office`), not under `/mnt/c/`.
+- Keep the project in your Linux home (`~/workspace/agentic-os`), not under `/mnt/c/`.
   Git and the tests are much slower on Windows folders.
 - GitHub: clone over HTTPS. For a push, use a personal access token as the password.
 - `data/` and your memory notes are not in git, so each computer has its own jobs,

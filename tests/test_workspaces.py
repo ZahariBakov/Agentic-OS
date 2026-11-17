@@ -264,7 +264,7 @@ def test_a_changed_git_link_is_refused(fake_agent, repo, tmp_path):
 
 
 def test_apply_refuses_protected_files_of_this_project(fake_agent, repo, monkeypatch):
-    monkeypatch.setattr(safety, "PROJECT_DIR", repo.resolve())  # pretend the repo is Agent Office
+    monkeypatch.setattr(safety, "PROJECT_DIR", repo.resolve())  # pretend the repo is Agentic OS
     job = run_in(repo)
     (workspaces.Path(job.workspace["worktree"]) / "roster.json").write_text("{}\n")
 

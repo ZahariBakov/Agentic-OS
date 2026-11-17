@@ -20,7 +20,7 @@ How it works:
 3. A gap up to WARM_FOR could have been kept warm with pings (one every
    PING_EVERY of the cache life). A longer gap is not worth pinging.
 4. Verdict: the pings pay when the saving minus the ping cost is more than
-   PAYS_USD. Agent Office calls (agents that work under ~/.cache/agentic-os, or a
+   PAYS_USD. Agentic OS calls (agents that work under ~/.cache/agentic-os, or a
    job's session) are counted on their own too, because only those we could
    ping ourselves.
 
@@ -40,7 +40,7 @@ from pathlib import Path
 from . import job_store, jobs
 
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
-OFFICE_DIR = Path.home() / ".cache" / "agentic-os"  # where Agent Office agents work
+OFFICE_DIR = Path.home() / ".cache" / "agentic-os"  # where Agentic OS agents work
 DAYS_BACK = 30
 
 MIN_RELOAD = 10_000  # tokens; a smaller cache write is not worth a ping
@@ -118,7 +118,7 @@ def read_calls(path):
 
 
 def job_sessions():
-    """Return the session ids of Agent Office jobs (a lead may work outside OFFICE_DIR)."""
+    """Return the session ids of Agentic OS jobs (a lead may work outside OFFICE_DIR)."""
     sessions = set()
     for path in sorted(job_store.JOBS_DIR.glob("*.json")):
         try:
@@ -131,7 +131,7 @@ def job_sessions():
 
 
 def is_office(call, sessions):
-    """True when the call was made by an Agent Office agent."""
+    """True when the call was made by an Agentic OS agent."""
     return call["session"] in sessions or Path(call["cwd"]).is_relative_to(OFFICE_DIR)
 
 
@@ -166,7 +166,7 @@ def cold_reload(call, previous):
 
 
 def empty_part():
-    """Return the counters of one part of the report (your chats or Agent Office)."""
+    """Return the counters of one part of the report (your chats or Agentic OS)."""
     return {"sessions": 0, "calls": 0, "cold": 0, "cold_tokens": 0, "cold_usd": 0.0,
             "savable": 0, "savable_usd": 0.0, "ping_usd": 0.0, "long_gaps": 0}
 
@@ -233,12 +233,12 @@ def part_lines(title, part):
 def text(result):
     """Return the report as text for the terminal."""
     lines = [f"Cache report for the last {result['days']} days.", ""]
-    lines += part_lines("Agent Office agents", result["office"])
+    lines += part_lines("Agentic OS agents", result["office"])
     lines += part_lines("Your own Claude Code chats", result["chats"])
     if result["worst"]:
         lines += ["", "The most expensive reloads:"]
         for item in result["worst"]:
-            who = "Agent Office" if item["office"] else "chat"
+            who = "Agentic OS" if item["office"] else "chat"
             lines.append(f"  {item['at']}  {jobs.usd(item['usd'])}  {item['tokens']} tokens after"
                          f" {item['gap'] / 60:.0f} min, {item['model']}, {who} ({item['folder']})")
     lines += ["", "Estimates at API list prices (input per million tokens: opus $5, sonnet $3, haiku $1;",

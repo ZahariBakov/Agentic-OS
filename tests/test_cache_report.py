@@ -34,7 +34,7 @@ def write_session(folder, name, lines):
 
 @pytest.fixture
 def projects(tmp_path, monkeypatch, temp_jobs):
-    """A temporary ~/.claude/projects and Agent Office work folder."""
+    """A temporary ~/.claude/projects and Agentic OS work folder."""
     monkeypatch.setattr(cache_report, "PROJECTS_DIR", tmp_path / "projects")
     monkeypatch.setattr(cache_report, "OFFICE_DIR", tmp_path / "office")
     return tmp_path / "projects"
@@ -104,7 +104,7 @@ def test_old_calls_and_bad_lines_are_skipped(projects):
 def test_text_says_the_verdict(projects):
     write_session(projects / "p", "a.jsonl", [line(0, 50_000), line(90, 100_000)])
     text = cache_report.text(cache_report.report(now=NOW))
-    assert "Agent Office agents: no model calls." in text
+    assert "Agentic OS agents: no model calls." in text
     assert "Verdict: keep-warm pays." in text
     assert "The most expensive reloads:" in text
     assert text.isascii()
