@@ -32,6 +32,7 @@ Something must call `tick` regularly: you, or cron, for example every 10 minutes
 Usage (from the project folder):
     python -m agentic_os.routines list
     python -m agentic_os.routines tick         start the routines that are due
+    python -m agentic_os.routines tick --dry-run   only print which routines are due
     python -m agentic_os.routines run <name>   start one routine now (the cost cap still counts)
 """
 
@@ -324,20 +325,24 @@ def forget_gone():
             save_state(state)
 
 
-def tick(now=None, run=None):
+def tick(now=None, run=None, dry_run=False):
     """Start every routine that is due. Return the names of the routines that started.
 
     run: see start().
+    dry_run: only return the names of the routines that are due. Nothing starts and
+    the state file is not written (a dry run must not move the schedule).
     """
     now = now or datetime.now()
-    forget_gone()
+    if not dry_run:
+        forget_gone()
     state = load_state()
     started = []
     for routine in all_routines():
         name = routine["name"]
         if name not in state:
             # A new routine waits for its first scheduled time.
-            record_run(name, now)
+            if not dry_run:
+                record_run(name, now)
             continue
         last_run = datetime.fromisoformat(state[name]["last_run"])
         if last_run > now:
@@ -347,9 +352,16 @@ def tick(now=None, run=None):
                 continue
             # The clock was wrong once: start the schedule again from now. Otherwise
             # the routine would stay silent until that date.
-            record_run(name, now)
+            if not dry_run:
+                record_run(name, now)
             continue
         if not is_due(routine["schedule"], last_run, now):
+            continue
+        if dry_run:
+            reason = cap_reason(routine, now)
+            if reason is not None:
+                print(f"{name} is due, but would be skipped: {reason}")
+            started.append(name)
             continue
         # Save the run before the job, so a crash or a slow job never starts it twice.
         record_run(name, now)
@@ -422,13 +434,18 @@ def main():
     parser = argparse.ArgumentParser(description="Routines: scheduled jobs with a cost cap.")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("list", help="list the routines")
-    commands.add_parser("tick", help="start the routines that are due")
+    tick_parser = commands.add_parser("tick", help="start the routines that are due")
+    tick_parser.add_argument("--dry-run", action="store_true",
+                             help="only print which routines are due; start nothing, save nothing")
     run_parser = commands.add_parser("run", help="start one routine now")
     run_parser.add_argument("name")
     args = parser.parse_args()
 
     if args.command == "list":
         print_list()
+    elif args.command == "tick" and args.dry_run:
+        due = tick(dry_run=True)
+        print(f"Due: {', '.join(due) or 'nothing'}")
     elif args.command == "tick":
         started = tick()
         print(f"Started: {', '.join(started) or 'nothing is due'}")

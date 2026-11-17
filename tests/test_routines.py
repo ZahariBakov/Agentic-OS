@@ -119,6 +119,28 @@ def test_missed_runs_start_once(temp_routines, fake_run):
     assert len(jobs.all_jobs()) == 1
 
 
+def test_dry_run_lists_due_routines_but_starts_nothing(temp_routines, fake_run):
+    write_routine(temp_routines, "hello", mode="active")
+    routines.tick(MONDAY_9)
+    tuesday = MONDAY_9 + timedelta(days=1)
+    state_before = routines.load_state()
+
+    assert routines.tick(tuesday, dry_run=True) == ["hello"]
+
+    assert jobs.all_jobs() == []
+    assert fake_run == []
+    assert routines.load_state() == state_before  # the schedule did not move
+    assert routines.tick(tuesday) == ["hello"]  # a real tick still starts it
+
+
+def test_dry_run_does_not_save_a_new_routine(temp_routines, fake_run):
+    write_routine(temp_routines, "hello")
+
+    assert routines.tick(MONDAY_9, dry_run=True) == []
+
+    assert "hello" not in routines.load_state()
+
+
 def test_routine_with_a_mistake_is_skipped(temp_routines, fake_run, capsys):
     write_routine(temp_routines, "broken", schedule="sometimes")
     write_routine(temp_routines, "hello")
