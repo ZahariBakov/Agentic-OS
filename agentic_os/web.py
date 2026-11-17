@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import signal
+import socket
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
@@ -852,6 +853,25 @@ def api_artifact(job_id: str):
     return {**meta, "text": text}
 
 
+def bind_port(port):
+    """Take the port before anything starts, or stop with a clear message.
+
+    uvicorn runs the lifespan (recover, the routine loop) before it binds the port.
+    When the port was busy, the routines still ran while the server stopped: a
+    backup, new queued jobs, and "cannot schedule new futures after shutdown".
+    A socket that is bound here is handed to uvicorn, so nothing runs without it.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # like uvicorn: a quick restart works
+    try:
+        sock.bind(("127.0.0.1", port))  # local only (project rule)
+    except OSError as error:
+        sock.close()
+        raise SystemExit(f"Port {port} is busy ({error.strerror}). Is Agentic OS already running? "
+                         f"Stop it, or start this one with --port {port + 1}.") from None
+    return sock
+
+
 def main():
     parser = argparse.ArgumentParser(description="Start the local web page.")
     parser.add_argument("--port", type=int, default=8000)
@@ -860,12 +880,13 @@ def main():
     args = parser.parse_args()
     app.state.port = args.port
     app.state.routines = not args.no_routines
+    sock = bind_port(args.port)  # first: a busy port stops here, before the routines
     # The link holds the token. It is printed only here, in your own terminal (like Jupyter does)
     print(f"Open {access.link(args.port)}")
     config = uvicorn.Config(app, host="127.0.0.1", port=args.port)  # local only (project rule)
     logging.getLogger("uvicorn.access").addFilter(access.HideToken())  # after Config: it sets up the loggers
     try:
-        Server(config).run()
+        Server(config).run(sockets=[sock])
     except KeyboardInterrupt:  # Ctrl+C: uvicorn.run hides it the same way
         pass
 
